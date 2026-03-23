@@ -20,20 +20,6 @@ The `dataProcessing.py` script performs the following steps:
 3. Merges these values with **Region** metadata.
 4. **Filtering**: Any country missing a specific region or missing data for *any* of the 20 indicators is removed to ensure a complete dataset for analysis.
 
-## Usage in R
-
-To load the data in your R scripts (from the project root):
-
-```R
-library(readr)
-
-# Load the main dataset
-data <- read_csv("Data/consolidated_data.csv")
-
-# Load the descriptions for plotting labels
-descriptions <- read_csv("Data/indicator_descriptions.csv")
-```
-
 ## Indicators Included
 The dataset includes 20 indicators across Economic, Labor, Education, and Environmental categories, such as:
 - GNI per capita (constant 2015 US$)
