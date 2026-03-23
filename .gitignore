@@ -1,0 +1,10 @@
+# Data files
+Data/raw/*.zip
+
+# Python
+__pycache__/
+*.pyc
+
+# System files
+.DS_Store
+.gemini/
