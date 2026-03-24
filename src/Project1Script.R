@@ -1,9 +1,12 @@
 # Load libraries
 library(readr)
 library(ggplot2)
+library(ggfortify)
+library(qqplotr)
 library(rrr)
 library(olsrr)
 library(dplyr)
+library(performance)
 
 # Load data
 data = read_csv("Data/consolidated_data.csv")
@@ -33,6 +36,9 @@ data = data %>%
     primary_cmplt = SE.PRM.CMPT.ZS      # Primary completion rate, total (% of relevant age group)
   )
 
+# Exploratory Plots
+
+if (FALSE){
 ggplot(data, mapping = aes(x = drink_water, y = gni_pcap, color = Region))+
   geom_point() +
   labs(title = "People with Basic Drinking Water (% of population) vs. \nGNI per Capita (adj. 2015 USD)",
@@ -165,3 +171,41 @@ ggplot(data, mapping = aes(x = rich_money, y = gni_pcap, color = Region))+
        x="Income share held by highest 10%",
        y="GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
+}
+
+# Generate linear models for initial tests
+m1 = lm(gni_pcap ~ drink_water, data = data)
+m2 = lm(gni_pcap ~ rural_pop, data = data)
+m3 = lm(gni_pcap ~ mfg_valAdd, data = data)
+m4 = lm(gni_pcap ~ ag_exp_raw, data = data)
+m5 = lm(gni_pcap ~ oil_rents, data = data)
+m6 = lm(gni_pcap ~ labor_male, data = data)
+m7 = lm(gni_pcap ~ labor_intEd, data = data)
+m8 = lm(gni_pcap ~ urban_pop, data = data)
+m9 = lm(gni_pcap ~ child_labor, data = data)
+m10 = lm(gni_pcap ~ labor_female, data = data)
+m11 = lm(gni_pcap ~ mineral_rents, data = data)
+m12 = lm(gni_pcap ~ ore_met_exp, data = data)
+m13 = lm(gni_pcap ~ arable_land, data = data)
+m14 = lm(gni_pcap ~ trade, data = data)
+m15 = lm(gni_pcap ~ have_elec, data = data)
+m16 = lm(gni_pcap ~ labor_basicEd, data = data)
+m17 = lm(gni_pcap ~ labor_advEd, data = data)
+m18 = lm(gni_pcap ~ rich_money, data = data)
+m19 = lm(gni_pcap ~ primary_cmplt, data = data)
+
+for (i in 1:19){
+  model = paste0("m", i)
+  m = get(model)
+  
+  label = ggplot() + annotate("text", x = 0.5, y = 0.5, label = model, size = 20) + theme_void()
+  ap = autoplot(m, which = 1:6, ncol = 2, label.size = 3)
+  cm = check_model(m)
+  
+  print(label)
+  print(ap)
+  print(cm)
+  
+  ggsave(filename = paste0("Plots/", model, "_ap.png"), plot = ap, width = 12, height = 8)
+  ggsave(filename = paste0("Plots/", model, "_cm.png"), plot = plot(cm), width = 12, height = 8)
+}
