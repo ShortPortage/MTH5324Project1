@@ -7,6 +7,8 @@ library(rrr)
 library(olsrr)
 library(dplyr)
 library(performance)
+library(car)
+library(patchwork)
 
 # Load data
 data = read_csv("Data/consolidated_data.csv")
@@ -171,7 +173,7 @@ ggplot(data, mapping = aes(x = rich_money, y = gni_pcap, color = Region))+
        y="GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 }
-if (FALSE){
+#if (FALSE){
 # Generate linear models for initial tests
 m1 = lm(gni_pcap ~ drink_water, data = data)    # Both significant but linear gives nonsense income for low access to water. Try exp, ^2. Kept exp.
 m2 = lm(gni_pcap ~ rural_pop, data = data)      # Both significant, useful but will try exp, ^2. Kept exp.
@@ -233,7 +235,7 @@ for (i in 1:27){
   #ggsave(filename = paste0("Plots/", model, "_cm.png"), plot = plot(cm), width = 12, height = 8)
 }
 
-ggplot(data, mapping = aes(x = drink_water, y = gni_pcap, color = Region))+
+water_plot = ggplot(data, mapping = aes(x = drink_water, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m1)"), color = "black") +
@@ -244,7 +246,7 @@ ggplot(data, mapping = aes(x = drink_water, y = gni_pcap, color = Region))+
        y="GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = have_elec, y = gni_pcap, color = Region))+
+elec_plot = ggplot(data, mapping = aes(x = have_elec, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m15)"), color = "black") +
@@ -255,7 +257,7 @@ ggplot(data, mapping = aes(x = have_elec, y = gni_pcap, color = Region))+
        y="GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = rural_pop, y = gni_pcap, color = Region))+
+rural_plot = ggplot(data, mapping = aes(x = rural_pop, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m2)"), color = "black") +
@@ -266,7 +268,7 @@ ggplot(data, mapping = aes(x = rural_pop, y = gni_pcap, color = Region))+
        y="GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = urban_pop, y = gni_pcap, color = Region))+
+urban_plot = ggplot(data, mapping = aes(x = urban_pop, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m8)"), color = "black") +
@@ -304,7 +306,7 @@ ggplot(data, mapping = aes(x = urban_pop, y = gni_pcap, color = Region))+
 #       y="GNI per Capita (adj. 2015 USD)") +
 #  theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = ag_exp_raw, y = gni_pcap, color = Region))+
+agExp_plot = ggplot(data, mapping = aes(x = ag_exp_raw, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m4)"), color = "black") +
@@ -348,7 +350,7 @@ ggplot(data, mapping = aes(x = ag_exp_raw, y = gni_pcap, color = Region))+
 #       y="GNI per Capita (adj. 2015 USD)") +
 #  theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = child_labor, y = gni_pcap, color = Region))+
+childLabor_plot = ggplot(data, mapping = aes(x = child_labor, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
               aes(linetype = "Linear (m9)"), color = "black") +
@@ -391,7 +393,7 @@ ggplot(data, mapping = aes(x = child_labor, y = gni_pcap, color = Region))+
 #       y="GNI per Capita (adj. 2015 USD)") +
 #  theme(plot.title = element_text(hjust = 0.5), axis.title.x = element_text(hjust = 0.5), axis.title.y = element_text(hjust = 0.5))
 
-ggplot(data, mapping = aes(x = labor_advEd, y = gni_pcap, color = Region))+
+advEd_plot = ggplot(data, mapping = aes(x = labor_advEd, y = gni_pcap, color = Region))+
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x,
     aes(linetype = "Linear (m17)"), color = "black") +
@@ -410,7 +412,7 @@ ggplot(data, mapping = aes(x = labor_advEd, y = gni_pcap, color = Region))+
 #       y="GNI per Capita (adj. 2015 USD)") +
 #  theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, aes(x = primary_cmplt, y = gni_pcap)) +
+primaryCmplt_plot = ggplot(data, aes(x = primary_cmplt, y = gni_pcap)) +
   geom_point(aes(color = Region), alpha = 0.5) +
   geom_smooth(method = "lm", formula = y ~ x, 
               aes(linetype = "Linear (m19)"), color = "black") +
@@ -422,7 +424,18 @@ ggplot(data, aes(x = primary_cmplt, y = gni_pcap)) +
        linetype = "Model Type") +
   theme(plot.title = element_text(hjust = 0.5))
 
-} # If false end
+# Save Plots
+if (FALSE){
+ggsave("Plots/water.png", plot = water_plot, width = 10, height = 6)
+ggsave("Plots/elec.png", plot = elec_plot, width = 10, height = 6)
+ggsave("Plots/rural.png", plot = rural_plot, width = 10, height = 6)
+ggsave("Plots/urban.png", plot = urban_plot, width = 10, height = 6)
+ggsave("Plots/agExp.png", plot = agExp_plot, width = 10, height = 6)
+ggsave("Plots/childLabor.png", plot = childLabor_plot, width = 10, height = 6)
+ggsave("Plots/advEd.png", plot = advEd_plot, width = 10, height = 6)
+ggsave("Plots/primaryCmplt.png", plot = primaryCmplt_plot, width = 10, height = 6)
+}
+#} # If false end
 
 ####
 # FINAL SIGNIFICANT MODEL LIST:
@@ -447,14 +460,100 @@ for (i in 20:27){
   print(i)
   print(summary(m))
   
-  label = ggplot() + annotate("text", x = 0.5, y = 0.5, label = model, size = 20) + theme_void()
-  ap = autoplot(m, which = 1:6, ncol = 2, label.size = 3)
-  cm = check_model(m)
+  #label = ggplot() + annotate("text", x = 0.5, y = 0.5, label = model, size = 20) + theme_void()
+  #ap = autoplot(m, which = 1:6, ncol = 2, label.size = 3)
+  #cm = check_model(m)
   
-  print(label)
-  print(ap)
-  print(cm)
+  #print(label)
+  #print(ap)
+  #print(cm)
   
-  ggsave(filename = paste0("Plots/", model, "_ap.png"), plot = ap, width = 12, height = 8)
-  ggsave(filename = paste0("Plots/", model, "_cm.png"), plot = plot(cm), width = 12, height = 8)
+  #ggsave(filename = paste0("Plots/", model, "_ap.png"), plot = ap, width = 12, height = 8)
+  #ggsave(filename = paste0("Plots/", model, "_cm.png"), plot = plot(cm), width = 12, height = 8)
 }
+
+# Issues observed in autoplot and check_model outputs:
+# m20 no issues observed
+# m21 residuals vs. fitted isn't great, with small peak and then drop. But still okay. Everything else is fine.
+# m22 no issues observed
+# m23 no issues observed but large clustering of data at low values of ag exports, sparse elsewhere
+# m24 no issues observed
+# m25 slight upward skew for residuals on both ends of predictor range but looks good otherwise.
+# m26 no issues observed but large cluster of data at high values of electricity access, not sparse elsewhere though. Doesn't seem to violate homoscedasticity.
+# m27 no issues observed
+
+#####
+# MUTATE TO LOG FOR GNI SO WE HAVE EXPONENTIAL MODELS FOR EACH
+#####
+
+data = data %>%
+  mutate(log_gni = log(gni_pcap))
+
+# Put together a candidate model and analyze using olsrr.
+candidate_model = lm(log_gni ~ primary_cmplt + labor_advEd + child_labor + ag_exp_raw + urban_pop + drink_water + have_elec + rural_pop + Region, data = data)
+
+modelSubsets = ols_step_best_subset(candidate_model)
+print(modelSubsets)
+#plot(modelSubsets)
+
+# Save analysis as image
+if (FALSE){
+analysis_df <- modelSubsets$metrics
+
+p1 <- ggplot(analysis_df, aes(x = n, y = rsquare)) + geom_line(color="blue") + geom_point() + labs(title="R-Square")
+p2 <- ggplot(analysis_df, aes(x = n, y = adjr)) + geom_line(color="blue") + geom_point() + labs(title="Adj. R-Square")
+p3 <- ggplot(analysis_df, aes(x = n, y = cp)) + geom_line(color="blue") + geom_point() + labs(title="Mallows' Cp")
+p4 <- ggplot(analysis_df, aes(x = n, y = aic)) + geom_line(color="blue") + geom_point() + labs(title="AIC")
+p5 <- ggplot(analysis_df, aes(x = n, y = sbic)) + geom_line(color="blue") + geom_point() + labs(title="SBIC")
+p6 <- ggplot(analysis_df, aes(x = n, y = sbc)) + geom_line(color="blue") + geom_point() + labs(title="SBC/BIC")
+full_analysis_plot <- (p1 + p2 + p3) / (p4 + p5 + p6)
+
+ggsave("Plots/BestSubsetAnalysis.png", plot = full_analysis_plot, width = 15, height = 10, dpi = 300)
+}
+
+# Best Subsets Regression                                             
+#----------------------------------------------------------------------------------------------------------------
+#  Model Index    Predictors
+#----------------------------------------------------------------------------------------------------------------
+# 1         drink_water                                                                                       
+# 2         have_elec rural_pop                                                                               
+# 3         labor_advEd urban_pop have_elec                                                                   
+# 4         labor_advEd urban_pop have_elec Region                                                            
+# 5         labor_advEd drink_water have_elec rural_pop Region                                                
+# 6         labor_advEd ag_exp_raw urban_pop drink_water have_elec Region                                     
+# 7         labor_advEd child_labor ag_exp_raw urban_pop drink_water have_elec Region                         
+# 8         primary_cmplt labor_advEd child_labor ag_exp_raw drink_water have_elec rural_pop Region           
+# 9         primary_cmplt labor_advEd child_labor ag_exp_raw urban_pop drink_water have_elec rural_pop Region 
+#----------------------------------------------------------------------------------------------------------------
+
+# Model 3 has best SBC, AIC, and near the plateau of adj. R^2.
+# Model 5 has second best AIC, not being much higher than 3, but SBC for model 5 is significantly higher. Does add some adj. R^2 but not worth it because of SBC.
+# All predictors for 3 and 5 DO NOT violate any of the OLS assumptions, but have_elec is borderline for homoscedasticity. Have_water is better for homoscedasticity, but both seem okay.
+# Choose model 3.
+
+# Check summary, anova, and multicolinearity for 3 and 5.
+final_model_3 = lm(log_gni ~ labor_advEd + urban_pop + have_elec, data = data)
+final_model_5 = lm(log_gni ~ labor_advEd + drink_water + have_elec + rural_pop + Region, data = data)
+
+print("Summary for final model 3:")
+summary(final_model_3)
+print("Summary for final model 5:")
+summary(final_model_5)
+
+# Summary shows an increase from model 3->5 adj. R^2 of 0.6979 -> 0.7066. This is minimal.
+# Additionally, water access and region are not close to being statistically significant (water is closest but p still is 0.114)
+
+print("Anova for final model 3:")
+anova(final_model_3)
+print("Anova for final model 5:")
+anova(final_model_5)
+
+print("VIF for final model 3:")
+vif(final_model_3)
+print("VIF for final model 5:")
+vif(final_model_5)
+
+# VIF shows model 3 has good independence for selected variables, 5 is good too but still is worse.
+
+# Based on everything, we select model 3 as our final model. Each predictor satisfies all necessary assumptions and the model provides good performance without risk of overfitting.
+final_model = final_model_3
