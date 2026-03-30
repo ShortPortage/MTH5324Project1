@@ -580,50 +580,79 @@ x_water = seq(min(data$drink_water), max(data$drink_water), length.out = 100)
 x_ruralPop = seq(min(data$rural_pop), max(data$rural_pop), length.out = 100)
 
 # Calculate predictions. First final model 3, then final model 5
-gniPreds_urbanPop_3 = exp(cf3[1] + (cf3[2] * mean_adv) + (cf3[3] * x_urbanPop) + (cf3[4] * mean_elec))
+gniPreds_urbanPop_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * x_urbanPop) + (cf3[4] * mean_elec))
 gniPreds_advEd_3 = exp(cf3[1] + (cf3[2] * x_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * mean_elec))
-gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_adv) + (cf3[3] * mean_urbanPop) + (cf3[4] * x_elec))
+gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * x_elec))
 
-gniPreds_advEd_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-gniPreds_elec_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-gniPreds_water_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-gniPreds_ruralPop_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+#gniPreds_advEd_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+#gniPreds_elec_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+#gniPreds_water_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+#gniPreds_ruralPop_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
 
-# Define the variable you want to "test" (x-axis)
-x_seq <- seq(min(data$labor_advEd, na.rm=TRUE), 
-             max(data$labor_advEd, na.rm=TRUE), length.out=100)
-
-# Get all unique regions from your data
+# Get regions
 all_regions <- unique(data$Region)
 
-# Create a grid: 100 rows for every region
-pred_grid <- expand.grid(labor_advEd = x_seq, 
-                         Region = all_regions)
+# Make prediction grid
+predGrid_advEd <- expand.grid(labor_advEd = x_advEd, Region = all_regions)
 
-# Add the "held constant" variables (means)
-pred_grid$drink_water <- mean(data$drink_water, na.rm=TRUE)
-pred_grid$have_elec   <- mean(data$have_elec, na.rm=TRUE)
-pred_grid$rural_pop   <- mean(data$rural_pop, na.rm=TRUE)
+# Add means to grid
+predGrid_advEd$drink_water = mean(data$drink_water)
+predGrid_advEd$have_elec   = mean(data$have_elec)
+predGrid_advEd$rural_pop   = mean(data$rural_pop)
 
-# Generate predictions for all regions at once
-# We use exp() because the model was trained on log_gni
-pred_grid$gni_hat <- exp(predict(final_model_5, newdata = pred_grid))
+# Generate predictions
+predGrid_advEd$gni_hat = exp(predict(final_model_5, newdata = predGrid_advEd))
 
 ggplot(data, aes(x = labor_advEd, y = gni_pcap)) +
-  # 1. Plot the raw data points in the background
-  geom_point(aes(color = Region), alpha = 0.2) + 
-  # 2. Plot the model lines for each region
-  geom_line(data = pred_grid, aes(x = labor_advEd, y = gni_hat, color = Region), 
-            size = 1.2) +
-  labs(title = "Model 5: Regional Comparison of Advanced Education Effects",
-       subtitle = "Other predictors held at their global mean",
+  geom_point(aes(color = Region)) + 
+  geom_line(data = predGrid_advEd, aes(x = labor_advEd, y = gni_hat, color = Region)) +
+  labs(title = "Final Model 5: Labor Force with Advanced Education \n(% of total working-age population with advanced education) vs.\n GNI per Capita (adj. 2015 USD)",
        x = "Labor Force with Advanced Education (%)",
-       y = "GNI per Capita (2015 USD)") +
+       y = "GNI per Capita (2015 USD)")
+
+# 1. Calculate the average infrastructure levels for EACH region
+region_means <- data %>%
+  group_test() %>% # Ensure we don't have NAs interfering
+  group_by(Region) %>%
+  summarise(
+    mean_water = mean(drink_water, na.rm = TRUE),
+    mean_elec  = mean(have_elec, na.rm = TRUE),
+    mean_rural = mean(rural_pop, na.rm = TRUE)
+  )
+
+# 2. Create the sequence for Advanced Education
+x_advEd <- seq(min(data$labor_advEd, na.rm=TRUE), 
+               max(data$labor_advEd, na.rm=TRUE), 
+               length.out = 100)
+
+# 3. Create the expansion grid
+predGrid_advEd <- expand.grid(labor_advEd = x_advEd, Region = all_regions)
+
+# 4. Join the region-specific means into the grid
+predGrid_advEd <- predGrid_advEd %>%
+  left_join(region_means, by = "Region") %>%
+  rename(
+    drink_water = mean_water,
+    have_elec = mean_elec,
+    rural_pop = mean_rural
+  )
+
+# 5. Generate predictions using Model 5
+predGrid_advEd$gni_hat = exp(predict(final_model_5, newdata = predGrid_advEd))
+
+ggplot(data, aes(x = labor_advEd, y = gni_pcap, color = Region)) +
+  geom_point(alpha = 0.5) + 
+  geom_line(data = predGrid_advEd, aes(x = labor_advEd, y = gni_hat), size = 1) +
+  scale_y_continuous(labels = scales::dollar) + # Makes the Y axis easier to read
+  labs(title = "Model 5: Region-Adjusted Predictions",
+       subtitle = "Infrastructure variables held at Region-Specific Means",
+       x = "Labor Force with Advanced Education (%)",
+       y = "GNI per Capita (USD)") +
   theme_minimal()
 
 # Plot the raw data and the "Constant-Adjusted" line
-ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
-  geom_point(alpha = 0.3) +
-  geom_line(data = data.frame(x = x_seq, y = y_values), 
-            aes(x = x, y = y), color = "red", size = 1) +
-  labs(title = "Model 3: Urban Pop effect (others held at mean)")
+#ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
+#  geom_point(alpha = 0.3) +
+#  geom_line(data = data.frame(x = x_seq, y = y_values), 
+#            aes(x = x, y = y), color = "red", size = 1) +
+#  labs(title = "Model 3: Urban Pop effect (others held at mean)")
