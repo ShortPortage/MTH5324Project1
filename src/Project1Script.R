@@ -562,22 +562,64 @@ final_model = final_model_3
 cf3 = coef(final_model_3)
 cf5 = coef(final_model_5)
 
+# final_model_3 = lm(log_gni ~ labor_advEd + urban_pop + have_elec, data = data)
 # final_model_5 = lm(log_gni ~ labor_advEd + drink_water + have_elec + rural_pop + Region, data = data)
-
 
 # Calculate means
 mean_urbanPop = mean(data$urban_pop)
 mean_advEd = mean(data$labor_advEd)
 mean_elec = mean(data$have_elec)
 mean_water = mean(data$drink_water)
+mean_ruralPop = mean(data$rural_pop)
 
-# Create a sequence for the X-axis (Urban Pop)
-x_seq = seq(min(data$urban_pop), max(data$urban_pop), length.out = 100)
+# Create x values
+x_urbanPop = seq(min(data$urban_pop), max(data$urban_pop), length.out = 100)
+x_advEd = seq(min(data$labor_advEd), max(data$labor_advEd), length.out = 100)
+x_elec = seq(min(data$have_elec), max(data$have_elec), length.out = 100)
+x_water = seq(min(data$drink_water), max(data$drink_water), length.out = 100)
+x_ruralPop = seq(min(data$rural_pop), max(data$rural_pop), length.out = 100)
 
-# Calculate the Y-axis using the model constants
-# log_y = Intercept + (beta1 * mean_adv) + (beta2 * x_seq) + (beta3 * mean_elec)
-log_y = cf[1] + (cf[2] * mean_adv) + (cf[3] * x_seq) + (cf[4] * mean_elec)
-y_values = exp(log_y)
+# Calculate predictions. First final model 3, then final model 5
+gniPreds_urbanPop_3 = exp(cf3[1] + (cf3[2] * mean_adv) + (cf3[3] * x_urbanPop) + (cf3[4] * mean_elec))
+gniPreds_advEd_3 = exp(cf3[1] + (cf3[2] * x_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * mean_elec))
+gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_adv) + (cf3[3] * mean_urbanPop) + (cf3[4] * x_elec))
+
+gniPreds_advEd_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+gniPreds_elec_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+gniPreds_water_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+gniPreds_ruralPop_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+
+# Define the variable you want to "test" (x-axis)
+x_seq <- seq(min(data$labor_advEd, na.rm=TRUE), 
+             max(data$labor_advEd, na.rm=TRUE), length.out=100)
+
+# Get all unique regions from your data
+all_regions <- unique(data$Region)
+
+# Create a grid: 100 rows for every region
+pred_grid <- expand.grid(labor_advEd = x_seq, 
+                         Region = all_regions)
+
+# Add the "held constant" variables (means)
+pred_grid$drink_water <- mean(data$drink_water, na.rm=TRUE)
+pred_grid$have_elec   <- mean(data$have_elec, na.rm=TRUE)
+pred_grid$rural_pop   <- mean(data$rural_pop, na.rm=TRUE)
+
+# Generate predictions for all regions at once
+# We use exp() because the model was trained on log_gni
+pred_grid$gni_hat <- exp(predict(final_model_5, newdata = pred_grid))
+
+ggplot(data, aes(x = labor_advEd, y = gni_pcap)) +
+  # 1. Plot the raw data points in the background
+  geom_point(aes(color = Region), alpha = 0.2) + 
+  # 2. Plot the model lines for each region
+  geom_line(data = pred_grid, aes(x = labor_advEd, y = gni_hat, color = Region), 
+            size = 1.2) +
+  labs(title = "Model 5: Regional Comparison of Advanced Education Effects",
+       subtitle = "Other predictors held at their global mean",
+       x = "Labor Force with Advanced Education (%)",
+       y = "GNI per Capita (2015 USD)") +
+  theme_minimal()
 
 # Plot the raw data and the "Constant-Adjusted" line
 ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
