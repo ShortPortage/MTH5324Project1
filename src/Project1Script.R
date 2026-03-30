@@ -557,3 +557,31 @@ vif(final_model_5)
 
 # Based on everything, we select model 3 as our final model. Each predictor satisfies all necessary assumptions and the model provides good performance without risk of overfitting.
 final_model = final_model_3
+
+# Get coefficients
+cf3 = coef(final_model_3)
+cf5 = coef(final_model_5)
+
+# final_model_5 = lm(log_gni ~ labor_advEd + drink_water + have_elec + rural_pop + Region, data = data)
+
+
+# Calculate means
+mean_urbanPop = mean(data$urban_pop)
+mean_advEd = mean(data$labor_advEd)
+mean_elec = mean(data$have_elec)
+mean_water = mean(data$drink_water)
+
+# Create a sequence for the X-axis (Urban Pop)
+x_seq = seq(min(data$urban_pop), max(data$urban_pop), length.out = 100)
+
+# Calculate the Y-axis using the model constants
+# log_y = Intercept + (beta1 * mean_adv) + (beta2 * x_seq) + (beta3 * mean_elec)
+log_y = cf[1] + (cf[2] * mean_adv) + (cf[3] * x_seq) + (cf[4] * mean_elec)
+y_values = exp(log_y)
+
+# Plot the raw data and the "Constant-Adjusted" line
+ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
+  geom_point(alpha = 0.3) +
+  geom_line(data = data.frame(x = x_seq, y = y_values), 
+            aes(x = x, y = y), color = "red", size = 1) +
+  labs(title = "Model 3: Urban Pop effect (others held at mean)")
