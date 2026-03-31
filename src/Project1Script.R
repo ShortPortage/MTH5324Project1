@@ -584,6 +584,34 @@ gniPreds_urbanPop_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * x_urbanPop)
 gniPreds_advEd_3 = exp(cf3[1] + (cf3[2] * x_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * mean_elec))
 gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * x_elec))
 
+# Plot data and model for model 3
+ggplot(data, aes(x = urban_pop, y = gni_pcap, color = Region)) +
+  geom_point(alpha = 1.0) +
+  geom_line(data = data.frame(x = x_urbanPop, y = gniPreds_urbanPop_3), 
+            aes(x = x, y = y), color = "red", size = 1) +
+  labs(title = "Model 3:  Urban Population (% of population) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Urban Population (% of population)",
+       y = "GNI per Capita (adj. 2015 USD)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data, aes(x = labor_advEd, y = gni_pcap, color = Region)) +
+  geom_point(alpha = 1.0) +
+  geom_line(data = data.frame(x = x_advEd, y = gniPreds_advEd_3), 
+            aes(x = x, y = y), color = "red", size = 1) +
+  labs(title = "Model 3:  Labor force with advanced education (% of total \nworking-age population with advanced education) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Labor force with advanced education (% of total working-age population with advanced education)",
+       y = "GNI per Capita (adj. 2015 USD)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data, aes(x = have_elec, y = gni_pcap, color = Region)) +
+  geom_point(alpha = 1.0) +
+  geom_line(data = data.frame(x = x_elec, y = gniPreds_elec_3), 
+            aes(x = x, y = y), color = "red", size = 1) +
+  labs(title = "Model 3:  Access to electricity (% of population) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Access to electricity (% of population)",
+       y = "GNI per Capita (adj. 2015 USD)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 #gniPreds_advEd_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
 #gniPreds_elec_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
 #gniPreds_water_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
@@ -592,10 +620,13 @@ gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * mean_urbanPop) 
 # Get regions
 all_regions <- unique(data$Region)
 
-# Make prediction grid
+# Make prediction grids
 predGrid_advEd <- expand.grid(labor_advEd = x_advEd, Region = all_regions)
+predGrid_elec <- expand.grid(have_elec = x_elec, Region = all_regions)
+predGrid_water <- expand.grid(have_water = x_water, Region = all_regions)
+predGrid_ruralPop <- expand.grid(rural_pop = x_ruralPop, Region = all_regions)
 
-# Add means to grid
+# Add means to grids
 predGrid_advEd$drink_water = mean(data$drink_water)
 predGrid_advEd$have_elec   = mean(data$have_elec)
 predGrid_advEd$rural_pop   = mean(data$rural_pop)
@@ -608,47 +639,8 @@ ggplot(data, aes(x = labor_advEd, y = gni_pcap)) +
   geom_line(data = predGrid_advEd, aes(x = labor_advEd, y = gni_hat, color = Region)) +
   labs(title = "Final Model 5: Labor Force with Advanced Education \n(% of total working-age population with advanced education) vs.\n GNI per Capita (adj. 2015 USD)",
        x = "Labor Force with Advanced Education (%)",
-       y = "GNI per Capita (2015 USD)")
-
-# 1. Calculate the average infrastructure levels for EACH region
-region_means <- data %>%
-  group_test() %>% # Ensure we don't have NAs interfering
-  group_by(Region) %>%
-  summarise(
-    mean_water = mean(drink_water, na.rm = TRUE),
-    mean_elec  = mean(have_elec, na.rm = TRUE),
-    mean_rural = mean(rural_pop, na.rm = TRUE)
-  )
-
-# 2. Create the sequence for Advanced Education
-x_advEd <- seq(min(data$labor_advEd, na.rm=TRUE), 
-               max(data$labor_advEd, na.rm=TRUE), 
-               length.out = 100)
-
-# 3. Create the expansion grid
-predGrid_advEd <- expand.grid(labor_advEd = x_advEd, Region = all_regions)
-
-# 4. Join the region-specific means into the grid
-predGrid_advEd <- predGrid_advEd %>%
-  left_join(region_means, by = "Region") %>%
-  rename(
-    drink_water = mean_water,
-    have_elec = mean_elec,
-    rural_pop = mean_rural
-  )
-
-# 5. Generate predictions using Model 5
-predGrid_advEd$gni_hat = exp(predict(final_model_5, newdata = predGrid_advEd))
-
-ggplot(data, aes(x = labor_advEd, y = gni_pcap, color = Region)) +
-  geom_point(alpha = 0.5) + 
-  geom_line(data = predGrid_advEd, aes(x = labor_advEd, y = gni_hat), size = 1) +
-  scale_y_continuous(labels = scales::dollar) + # Makes the Y axis easier to read
-  labs(title = "Model 5: Region-Adjusted Predictions",
-       subtitle = "Infrastructure variables held at Region-Specific Means",
-       x = "Labor Force with Advanced Education (%)",
-       y = "GNI per Capita (USD)") +
-  theme_minimal()
+       y = "GNI per Capita (2015 USD)")+
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Plot the raw data and the "Constant-Adjusted" line
 #ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
