@@ -1,21 +1,21 @@
 INDICATOR_CODE,INDICATOR_NAME
-SH.H2O.BASW.ZS,People using at least basic drinking water services (% of population)
-SP.RUR.TOTL.ZS,Rural population (% of total population)
+AG.LND.ARBL.ZS,Arable land (% of land area)
+EG.ELC.ACCS.ZS,Access to electricity (% of population)
+NE.TRD.GNFS.ZS,Trade (% of GDP)
 NV.IND.MANF.ZS,"Manufacturing, value added (% of GDP)"
-TX.VAL.AGRI.ZS.UN,Agricultural raw materials exports (% of merchandise exports)
+NY.GDP.MINR.RT.ZS,Mineral rents (% of GDP)
 NY.GDP.PETR.RT.ZS,Oil rents (% of GDP)
+NY.GNP.PCAP.KD,GNI per capita (constant 2015 US$)
+SE.PRM.CMPT.ZS,"Primary completion rate, total (% of relevant age group)"
+SH.H2O.BASW.ZS,People using at least basic drinking water services (% of population)
+SI.DST.10TH.10,Income share held by highest 10%
+SL.TLF.0714.ZS,"Children in employment, total (% of children ages 7-14)"
+SL.TLF.ADVN.ZS,Labor force with advanced education (% of total working-age population with advanced education)
+SL.TLF.BASC.ZS,Labor force with basic education (% of total working-age population with basic education)
+SL.TLF.CACT.FE.ZS,"Labor force participation rate, female (% of female population ages 15+) (modeled ILO estimate)"
 SL.TLF.CACT.MA.ZS,"Labor force participation rate, male (% of male population ages 15+) (modeled ILO estimate)"
 SL.TLF.INTM.ZS,Labor force with intermediate education (% of total working-age population with intermediate education)
+SP.RUR.TOTL.ZS,Rural population (% of total population)
 SP.URB.TOTL.IN.ZS,Urban population (% of total population)
-SL.TLF.0714.ZS,"Children in employment, total (% of children ages 7-14)"
-SL.TLF.CACT.FE.ZS,"Labor force participation rate, female (% of female population ages 15+) (modeled ILO estimate)"
-NY.GDP.MINR.RT.ZS,Mineral rents (% of GDP)
+TX.VAL.AGRI.ZS.UN,Agricultural raw materials exports (% of merchandise exports)
 TX.VAL.MMTL.ZS.UN,Ores and metals exports (% of merchandise exports)
-NY.GNP.PCAP.KD,GNI per capita (constant 2015 US$)
-AG.LND.ARBL.ZS,Arable land (% of land area)
-NE.TRD.GNFS.ZS,Trade (% of GDP)
-EG.ELC.ACCS.ZS,Access to electricity (% of population)
-SL.TLF.BASC.ZS,Labor force with basic education (% of total working-age population with basic education)
-SL.TLF.ADVN.ZS,Labor force with advanced education (% of total working-age population with advanced education)
-SI.DST.10TH.10,Income share held by highest 10%
-SE.PRM.CMPT.ZS,"Primary completion rate, total (% of relevant age group)"
