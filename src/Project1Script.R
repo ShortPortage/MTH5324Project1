@@ -585,7 +585,7 @@ gniPreds_advEd_3 = exp(cf3[1] + (cf3[2] * x_advEd) + (cf3[3] * mean_urbanPop) + 
 gniPreds_elec_3 = exp(cf3[1] + (cf3[2] * mean_advEd) + (cf3[3] * mean_urbanPop) + (cf3[4] * x_elec))
 
 # Plot data and model for model 3
-ggplot(data, aes(x = urban_pop, y = gni_pcap, color = Region)) +
+m3plt_urban = ggplot(data, aes(x = urban_pop, y = gni_pcap, color = Region)) +
   geom_point(alpha = 1.0) +
   geom_line(data = data.frame(x = x_urbanPop, y = gniPreds_urbanPop_3), 
             aes(x = x, y = y), color = "red", size = 1) +
@@ -594,57 +594,154 @@ ggplot(data, aes(x = urban_pop, y = gni_pcap, color = Region)) +
        y = "GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, aes(x = labor_advEd, y = gni_pcap, color = Region)) +
+m3plt_advEd = ggplot(data, aes(x = labor_advEd, y = gni_pcap, color = Region)) +
   geom_point(alpha = 1.0) +
   geom_line(data = data.frame(x = x_advEd, y = gniPreds_advEd_3), 
             aes(x = x, y = y), color = "red", size = 1) +
-  labs(title = "Model 3:  Labor force with advanced education (% of total \nworking-age population with advanced education) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
-       x = "Labor force with advanced education (% of total working-age population with advanced education)",
+  labs(title = "Model 3:  Labor Force with Advanced Education (% of total \nworking-age population with advanced education) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Labor Force with Advanced Education (% of total working-age population with advanced education)",
        y = "GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data, aes(x = have_elec, y = gni_pcap, color = Region)) +
+m3plt_elec = ggplot(data, aes(x = have_elec, y = gni_pcap, color = Region)) +
   geom_point(alpha = 1.0) +
   geom_line(data = data.frame(x = x_elec, y = gniPreds_elec_3), 
             aes(x = x, y = y), color = "red", size = 1) +
-  labs(title = "Model 3:  Access to electricity (% of population) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
-       x = "Access to electricity (% of population)",
+  labs(title = "Model 3:  Access to Electricity (% of population) vs. \nGNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Access to Electricity (% of population)",
        y = "GNI per Capita (adj. 2015 USD)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-#gniPreds_advEd_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-#gniPreds_elec_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-#gniPreds_water_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
-#gniPreds_ruralPop_5 = exp(cf[1] + (cf[2] * mean_adv) + (cf[3] * x_urbanPop) + (cf[4] * mean_elec))
+# Save model 3 plots
+ggsave(filename = paste0("Plots/m3pltUrban.png"), plot = m3plt_urban, width = 12, height = 8)
+ggsave(filename = paste0("Plots/m3pltAdvEd.png"), plot = m3plt_advEd, width = 12, height = 8)
+ggsave(filename = paste0("Plots/m3pltElec.png"), plot = m3plt_elec, width = 12, height = 8)
 
 # Get regions
-all_regions <- unique(data$Region)
+all_regions = unique(data$Region)
 
 # Make prediction grids
-predGrid_advEd <- expand.grid(labor_advEd = x_advEd, Region = all_regions)
-predGrid_elec <- expand.grid(have_elec = x_elec, Region = all_regions)
-predGrid_water <- expand.grid(have_water = x_water, Region = all_regions)
-predGrid_ruralPop <- expand.grid(rural_pop = x_ruralPop, Region = all_regions)
+predGrid_advEd = expand.grid(labor_advEd = x_advEd, Region = all_regions)
+predGrid_elec = expand.grid(have_elec = x_elec, Region = all_regions)
+predGrid_water = expand.grid(drink_water = x_water, Region = all_regions)
+predGrid_ruralPop = expand.grid(rural_pop = x_ruralPop, Region = all_regions)
 
 # Add means to grids
-predGrid_advEd$drink_water = mean(data$drink_water)
-predGrid_advEd$have_elec   = mean(data$have_elec)
-predGrid_advEd$rural_pop   = mean(data$rural_pop)
+predGrid_advEd$drink_water = mean_water
+predGrid_advEd$have_elec   = mean_elec
+predGrid_advEd$rural_pop   = mean_ruralPop
+
+predGrid_elec$drink_water  = mean_water
+predGrid_elec$rural_pop    = mean_ruralPop
+predGrid_elec$labor_advEd  = mean_advEd
+  
+predGrid_water$have_elec   = mean_elec
+predGrid_water$rural_pop   = mean_ruralPop
+predGrid_water$labor_advEd = mean_advEd
+  
+predGrid_ruralPop$drink_water = mean_water
+predGrid_ruralPop$have_elec   = mean_elec
+predGrid_ruralPop$labor_advEd = mean_advEd
 
 # Generate predictions
 predGrid_advEd$gni_hat = exp(predict(final_model_5, newdata = predGrid_advEd))
+predGrid_elec$gni_hat = exp(predict(final_model_5, newdata = predGrid_elec))
+predGrid_water$gni_hat = exp(predict(final_model_5, newdata = predGrid_water))
+predGrid_ruralPop$gni_hat = exp(predict(final_model_5, newdata = predGrid_ruralPop))
 
-ggplot(data, aes(x = labor_advEd, y = gni_pcap)) +
+m5plt_advEd = ggplot(data, aes(x = labor_advEd, y = gni_pcap)) +
   geom_point(aes(color = Region)) + 
   geom_line(data = predGrid_advEd, aes(x = labor_advEd, y = gni_hat, color = Region)) +
-  labs(title = "Final Model 5: Labor Force with Advanced Education \n(% of total working-age population with advanced education) vs.\n GNI per Capita (adj. 2015 USD)",
+  labs(title = "Final Model 5: Labor Force with Advanced Education \n(% of total working-age population with advanced education) vs.\n GNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
        x = "Labor Force with Advanced Education (%)",
        y = "GNI per Capita (2015 USD)")+
   theme(plot.title = element_text(hjust = 0.5))
 
-# Plot the raw data and the "Constant-Adjusted" line
-#ggplot(data, aes(x = urban_pop, y = gni_pcap)) +
-#  geom_point(alpha = 0.3) +
-#  geom_line(data = data.frame(x = x_seq, y = y_values), 
-#            aes(x = x, y = y), color = "red", size = 1) +
-#  labs(title = "Model 3: Urban Pop effect (others held at mean)")
+m5plt_elec = ggplot(data, aes(x = have_elec, y = gni_pcap)) +
+  geom_point(aes(color = Region)) + 
+  geom_line(data = predGrid_elec, aes(x = have_elec, y = gni_hat, color = Region)) +
+  labs(title = "Final Model 5: Access to Electricity (% of population) \nvs. GNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Access to Electricity (% of population)",
+       y = "GNI per Capita (2015 USD)")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+m5plt_water = ggplot(data, aes(x = drink_water, y = gni_pcap)) +
+  geom_point(aes(color = Region)) + 
+  geom_line(data = predGrid_water, aes(x = drink_water, y = gni_hat, color = Region)) +
+  labs(title = "Final Model 5: People with Basic Drinking Water (% of population) \nvs. GNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "People with Basic Drinking Water (% of population)",
+       y = "GNI per Capita (2015 USD)")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+m5plt_rural = ggplot(data, aes(x = rural_pop, y = gni_pcap)) +
+  geom_point(aes(color = Region)) + 
+  geom_line(data = predGrid_ruralPop, aes(x = rural_pop, y = gni_hat, color = Region)) +
+  labs(title = "Final Model 5: Rural Population (% of population) \nvs. GNI per Capita (adj. 2015 USD)\n(other predictors held at mean)",
+       x = "Rural Population (% of population)",
+       y = "GNI per Capita (2015 USD)")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Save model 5 plots
+ggsave(filename = paste0("Plots/m5pltAdvEd.png"), plot = m5plt_advEd, width = 12, height = 8)
+ggsave(filename = paste0("Plots/m5pltElec.png"), plot = m5plt_elec, width = 12, height = 8)
+ggsave(filename = paste0("Plots/m5pltWater.png"), plot = m5plt_water, width = 12, height = 8)
+ggsave(filename = paste0("Plots/m5pltRural.png"), plot = m5plt_rural, width = 12, height = 8)
+
+#######
+# FIN #
+#######
+
+#> summary(final_model_3)
+
+#Call:
+#  lm(formula = log_gni ~ labor_advEd + urban_pop + have_elec, data = data)
+
+#Residuals:
+#  Min      1Q  Median      3Q     Max 
+#-1.8433 -0.2975  0.0055  0.3067  1.4485 
+
+#Coefficients:
+#  Estimate Std. Error t value Pr(>|t|)    
+#(Intercept) 4.129479   0.407413  10.136 6.03e-16 ***
+#  labor_advEd 0.016523   0.005103   3.238  0.00176 ** 
+#  urban_pop   0.018663   0.003529   5.288 1.07e-06 ***
+#  have_elec   0.019370   0.002615   7.408 1.23e-10 ***
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#Residual standard error: 0.5277 on 79 degrees of freedom
+#Multiple R-squared:  0.709,	Adjusted R-squared:  0.6979 
+#F-statistic: 64.15 on 3 and 79 DF,  p-value: < 2.2e-16
+
+
+#> print("Summary for final model 5:")
+#[1] "Summary for final model 5:"
+
+#> summary(final_model_5)
+
+#Call:
+#  lm(formula = log_gni ~ labor_advEd + drink_water + have_elec + 
+#       rural_pop + Region, data = data)
+
+#Residuals:
+#  Min       1Q   Median       3Q      Max 
+#-1.77016 -0.26270  0.01619  0.29159  1.22614 
+
+#Coefficients:
+#  Estimate Std. Error t value Pr(>|t|)    
+#(Intercept)                       5.224211   0.885942   5.897 1.07e-07 ***
+#  labor_advEd                       0.013750   0.005297   2.596 0.011400 *  
+#  drink_water                       0.014779   0.009269   1.595 0.115128    
+#have_elec                         0.012960   0.005765   2.248 0.027602 *  
+#  rural_pop                        -0.015023   0.004330  -3.470 0.000878 ***
+#  RegionEurope & Central Asia       0.257967   0.240596   1.072 0.287162    
+#RegionLatin America & Caribbean   0.126549   0.258949   0.489 0.626517    
+#RegionMiddle East & North Africa -0.162702   0.295035  -0.551 0.582997    
+#RegionSouth Asia                 -0.378202   0.331096  -1.142 0.257073    
+#RegionSub-Saharan Africa          0.064538   0.294888   0.219 0.827372    
+#---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#Residual standard error: 0.5201 on 73 degrees of freedom
+#Multiple R-squared:  0.7388,	Adjusted R-squared:  0.7066 
+#F-statistic: 22.95 on 9 and 73 DF,  p-value: < 2.2e-16
